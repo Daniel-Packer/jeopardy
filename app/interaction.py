@@ -73,12 +73,14 @@ class User:
         pickle.dump(self, open(users_path / f"{self.name}.pkl", "wb"))
 
     def record_performance(
-        self, clue_id: int, clue_embedding: np.ndarray, correct: int, clue_value: float
+        self, clue_id: int, clue_embedding: np.ndarray, clue_score: int, clue_value: float
     ):
-        # Correct is either +1, 0, or -1, indicating correct, no answer, or incorrect
+        # Clue Score is either +1, 0, or -1, indicating correct, no answer, or incorrect
+        # A no answer should count as 50% of getting it wrong:
+        clue_score = -0.5 if clue_score == 0 else clue_score
         self.clues_seen.append(clue_id)
-        self.skill_vector += correct * clue_embedding
-        self.win_record.append(correct * clue_value)
+        self.skill_vector += clue_score * clue_embedding
+        self.win_record.append(clue_score * clue_value)
 
     @property
     def hit_rate(self):
