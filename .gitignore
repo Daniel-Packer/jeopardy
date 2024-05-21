@@ -1,0 +1,3 @@
+jeopardy-parser/data/*
+app/split_embeddings/*
+app/split_embeddings_max_80MB/*

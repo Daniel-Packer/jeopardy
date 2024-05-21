@@ -5,6 +5,7 @@ from pathlib import Path
 import datetime
 import pickle
 import os
+import datetime
 
 root_path = Path(__file__).parent
 users_path = root_path / "users"
@@ -54,10 +55,15 @@ class User:
     # expected_performance: torch.Tensor
     name: str
     beta: float = 20.0
-    clues_seen: list[int] = field(default_factory=lambda: [])
     skill_vector: np.ndarray = field(default_factory=lambda: np.zeros(384))
     last_seen: datetime.datetime = field(default_factory=datetime.datetime.now)
-    win_record: list[float] = field(default_factory=lambda: [])
+    date_record: list[datetime.datetime] = field(default_factory=lambda: [])
+    beta_record: list[float] = field(default_factory=lambda: [])
+
+    win_record: list[float] = field(default_factory=lambda: []) # [100, 0, -500]
+    clues_seen: list[int] = field(default_factory=lambda: []) # [12, 78, 73]
+    clue_value_record: list[float] = field(default_factory=lambda: []) # [100, 1000, 500]
+
 
     def expected_performance(self, embeddings: np.ndarray) -> np.ndarray:
         expected_performance = cos_sim(self.skill_vector, embeddings)[0]
@@ -77,10 +83,13 @@ class User:
     ):
         # Clue Score is either +1, 0, or -1, indicating correct, no answer, or incorrect
         # A no answer should count as 50% of getting it wrong:
-        clue_score = -0.5 if clue_score == 0 else clue_score
+        clue_score_coef = -0.5 if clue_score == 0 else clue_score
         self.clues_seen.append(clue_id)
-        self.skill_vector += clue_score * clue_embedding
+        self.skill_vector += clue_score_coef * clue_embedding
         self.win_record.append(clue_score * clue_value)
+        self.date_record.append(datetime.datetime.now())
+        self.beta_record.append(self.beta)
+        self.clue_value_record.append(clue_value)
 
     @property
     def hit_rate(self):
